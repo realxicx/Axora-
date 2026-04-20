@@ -67,6 +67,6 @@ async def help(ctx):
 @bot.event
 async def on_ready():
     print(f"Axora is running on GitHub Actions!")
-    await bot.change_presence(activity=discord.Game(name="$help | Pixora"))
+    await bot.change_presence(activity=discord.Game(name="$help | Xicx_"))
 
 bot.run(TOKEN)
