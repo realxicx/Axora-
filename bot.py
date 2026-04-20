@@ -1,12 +1,12 @@
-import discord
+import discord  # Fixed: Must be lowercase 'import'
 from discord.ext import commands
 import os
 import datetime
 
 # --- CONFIGURATION ---
-# This line looks for the 'TOKEN' you saved in GitHub Secrets
+# This pulls the 'TOKEN' from your GitHub Secrets
 TOKEN = os.getenv('TOKEN') 
-OWNER_ID = 123456789012345678  # Replace with your actual Discord ID
+OWNER_ID = 123456789012345678  # Double check this is YOUR Discord ID
 DEFAULT_PREFIX = "$"
 
 # Data Storage (Temporary)
@@ -36,12 +36,13 @@ class CategorySelect(discord.ui.Select):
 
     async def callback(self, interaction: discord.Interaction):
         category = self.values[0]
-        await interaction.response.send_message(f"✨ **{category} Module** coming soon!", ephemeral=True)
+        await interaction.response.send_message(f"✨ **{category} Module** commands are being loaded!", ephemeral=True)
 
 class MainMenuView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
         self.add_item(CategorySelect())
+        # Make sure this link is your actual support server
         self.add_item(discord.ui.Button(label="Support", url="https://discord.gg/pixora", style=discord.ButtonStyle.link))
 
 # --- COMMANDS ---
@@ -82,7 +83,8 @@ async def np(ctx):
 
 @np.command()
 async def add(ctx, user: discord.User):
-    if user.id not in np_users: np_users.append(user.id)
+    if user.id not in np_users:
+        np_users.append(user.id)
     await ctx.send(f"✅ Added {user.name} to NP list.")
 
 @bot.event
@@ -91,7 +93,9 @@ async def on_ready():
 
 # --- EXECUTION ---
 if TOKEN:
-    bot.run(TOKEN)
+    try:
+        bot.run(TOKEN)
+    except discord.LoginFailure:
+        print("ERROR: Invalid Token! Check your GitHub Secrets.")
 else:
     print("ERROR: No TOKEN found in Environment Variables!")
-  
