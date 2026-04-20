@@ -5,62 +5,39 @@ import os
 # --- CONFIG ---
 TOKEN = os.getenv('TOKEN')
 PREFIX = "$"
-OWNER_ID = 123456789012345678 # Replace with your Discord ID
+OWNER_ID = 123456789012345678 
 intents = discord.Intents.all()
-
 bot = commands.Bot(command_prefix=PREFIX, intents=intents, help_command=None)
 
-# --- COMMAND DATA FOR THE MENU ---
-COMMAND_LISTS = {
-    "Antinuke": (
-        "🛡️ **Antinuke Commands**\n"
-        "`$antinuke enable`, `$antinuke disable`, `$antinuke config`, "
-        "`$whitelist add`, `$whitelist remove`, `$whitelist show`, "
-        "`$antinuke logs`, `$antinuke punishment`, `$antinuke settings`"
-    ),
-    "AutoMod": (
-        "🤖 **AutoMod Commands**\n"
-        "`$automod setup`, `$antispam on`, `$antilink on`, `$antighostping on`, "
-        "`$antiinvite on`, `$autoban setup`, `$wordblock add`, `$wordblock remove`"
-    ),
-    "Moderation": (
-        "🔨 **Moderation Commands**\n"
-        "`$kick`, `$ban`, `$mute`, `$unmute`, `$warn`, `$clear`, `$nuke`, "
-        "`$lock`, `$unlock`, `$slowmode`, `$hide`, `$unhide`, `$timeout`, "
-        "`$softban`, `$vmute`, `$vunmute`, `$deafen`, `$undeafen`"
-    ),
-    "General": (
-        "📊 **General Commands**\n"
-        "`$ping`, `$serverinfo`, `$userinfo`, `$avatar`, `$stats`, `$invite`, "
-        "`$botinfo`, `$uptime`, `$membercount`, `$roleinfo`, `$channelinfo`"
-    )
+# --- COMMAND DATA ---
+COMMANDS_MAP = {
+    "Antinuke": "🛡️ **Antinuke Module**\n`setup`, `enable`, `disable`, `whitelist`, `config`, `settings`, `logs`, `punishment`, `trust`, `untrust`...",
+    "AutoMod": "🤖 **AutoMod Module**\n`automod setup`, `antispam on`, `antilink on`, `antighostping on`, `antiinvite on`, `autoban`, `wordblock`...",
+    "Moderation": "🔨 **Moderation Module**\n`kick`, `ban`, `mute`, `unmute`, `warn`, `clear`, `nuke`, `lock`, `unlock`, `slowmode`, `hide`, `unhide`...",
+    "General": "📊 **General Module**\n`ping`, `serverinfo`, `userinfo`, `avatar`, `stats`, `invite`, `botinfo`, `uptime`, `membercount`..."
 }
 
-# --- UI COMPONENTS (The Dropdown Logic) ---
+# --- UI COMPONENTS ---
 
 class CategorySelect(discord.ui.Select):
     def __init__(self):
         options = [
-            discord.SelectOption(label="Antinuke", emoji="🛡️", description="Protection & Whitelist"),
-            discord.SelectOption(label="AutoMod", emoji="🤖", description="Auto-filters & Spam control"),
-            discord.SelectOption(label="Moderation", emoji="🔨", description="Admin & Staff tools"),
-            discord.SelectOption(label="General", emoji="📊", description="Utility & Info"),
+            discord.SelectOption(label="Antinuke", emoji="🛡️"),
+            discord.SelectOption(label="AutoMod", emoji="🤖"),
+            discord.SelectOption(label="Moderation", emoji="🔨"),
+            discord.SelectOption(label="General", emoji="📊"),
         ]
-        super().__init__(placeholder="Select a module to view commands", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="Click here to view commands...", options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        # This is where the magic happens! It pulls from COMMAND_LISTS
+        # This replaces the "commands are being loaded" message with the real list
         category = self.values[0]
-        commands_text = COMMAND_LISTS.get(category, "No commands found.")
+        cmd_text = COMMANDS_MAP.get(category)
         
-        embed = discord.Embed(
-            title=f"Axora | {category} Module",
-            description=commands_text,
-            color=0x2b2d31
-        )
-        embed.set_footer(text=f"Requested by {interaction.user.name}", icon_url=interaction.user.display_avatar.url)
+        embed = discord.Embed(description=cmd_text, color=0x2b2d31)
+        embed.set_author(name=f"{category} Commands", icon_url=interaction.user.display_avatar.url)
         
-        # Edit the original message to show the commands
+        # This sends a clean, private message with the commands
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class MainMenuView(discord.ui.View):
@@ -69,32 +46,27 @@ class MainMenuView(discord.ui.View):
         self.add_item(CategorySelect())
         self.add_item(discord.ui.Button(label="Support", url="https://discord.gg/pixora", style=discord.ButtonStyle.link))
 
-# --- COMMANDS ---
+# --- HELP COMMAND ---
 
 @bot.command()
 async def help(ctx):
     embed = discord.Embed(
-        title="Axora Help Menu",
+        title="Axora v2 | Pixora Agency",
         description=(
-            "> **The Most Powerful Management Bot**\n\n"
-            "Select a category from the dropdown below to view its commands. "
-            "Our agency ensures 24/7 technical stability.\n\n"
+            "Welcome to the official **Axora** management interface.\n"
+            "Use the dropdown below to explore our **100+ commands**.\n\n"
             "**Total Commands:** `105` | **Prefix:** `$`"
         ),
         color=0x2b2d31
     )
-    embed.set_thumbnail(url=bot.user.display_avatar.url)
-    embed.set_footer(text="Made by Xicx_ for Pixora Agency")
+    embed.set_footer(text="Developed by Xicx_ • Pixora 2026")
     await ctx.send(embed=embed, view=MainMenuView())
 
-# Example Working Commands so they actually do something
-@bot.command()
-@commands.has_permissions(administrator=True)
-async def antinuke(ctx, status: str):
-    await ctx.send(f"🛡️ Antinuke has been **{status.upper()}D**.")
+# --- EVENTS ---
 
 @bot.event
 async def on_ready():
-    print(f"{bot.user.name} is online on GitHub Actions!")
+    print(f"Axora is running on GitHub Actions!")
+    await bot.change_presence(activity=discord.Game(name="$help | Pixora"))
 
 bot.run(TOKEN)
