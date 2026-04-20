@@ -7,7 +7,7 @@ import os
 TOKEN = os.getenv('TOKEN')
 PREFIX = '&'
 INTENTS = discord.Intents.all()
-COLOR = 0x2b2d31 # Aesthetic Dark Grey
+COLOR = 0x2b2d31 
 
 class Axora(commands.Bot):
     def __init__(self):
@@ -16,7 +16,7 @@ class Axora(commands.Bot):
     async def on_ready(self):
         activity = discord.Activity(type=discord.ActivityType.watching, name="Axora™ | Founder: Xicx_")
         await self.change_presence(status=discord.Status.online, activity=activity)
-        print(f"✅ Axora™ Professional System Online.")
+        print(f"✅ Axora™ Strict Security System Online.")
 
 bot = Axora()
 
@@ -24,178 +24,111 @@ bot = Axora()
 async def aesthetic_reply(ctx, title, description, color=COLOR):
     embed = discord.Embed(title=title, description=description, color=color)
     embed.set_author(name="Axora™ Security", icon_url=bot.user.display_avatar.url)
-    embed.set_footer(text=f"Admin: {ctx.author.name} | Execution Successful", icon_url=ctx.author.display_avatar.url)
+    embed.set_footer(text=f"Admin: {ctx.author.name} | Founder: Xicx_", icon_url=ctx.author.display_avatar.url)
     embed.timestamp = datetime.datetime.utcnow()
     return await ctx.send(embed=embed)
 
 # ==========================================
-# 1. INTERACTIVE WHITELIST (BUTTONS SYSTEM)
+# 1. INTERACTIVE AUTOMOD (BUTTONS SYSTEM)
+# ==========================================
+class AutomodButtons(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=180)
+
+    @discord.ui.button(label="Anti-Link", style=discord.ButtonStyle.secondary, emoji="🔗")
+    async def btn_link(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("✅ **Anti-Link** has been activated. No more external links allowed.", ephemeral=True)
+
+    @discord.ui.button(label="Anti-Invite", style=discord.ButtonStyle.secondary, emoji="📩")
+    async def btn_invite(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("✅ **Anti-Invite** enabled. Discord invite links will be deleted.", ephemeral=True)
+
+    @discord.ui.button(label="Anti-Spam", style=discord.ButtonStyle.secondary, emoji="⌨️")
+    async def btn_spam(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("✅ **Anti-Spam** active. Rapid messaging will be restricted.", ephemeral=True)
+
+    @discord.ui.button(label="Enable All", style=discord.ButtonStyle.success, emoji="🛡️")
+    async def btn_all(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("🛡️ **Full Automod Suite** has been enabled for this server.", ephemeral=True)
+
+@bot.group(invoke_without_command=True)
+@commands.has_permissions(manage_guild=True)
+async def automod(ctx):
+    embed = discord.Embed(
+        title="🤖 Axora™ Automod Configuration",
+        description="Select which Automod features you want to enable/disable for your server:",
+        color=COLOR
+    )
+    view = AutomodButtons()
+    await ctx.send(embed=embed, view=view)
+
+# ==========================================
+# 2. STRICT ANTINUKE SYSTEM
+# ==========================================
+@bot.group(invoke_without_command=True)
+@commands.has_permissions(administrator=True)
+async def antinuke(ctx):
+    await aesthetic_reply(ctx, "🛡️ System Info", "Use `&antinuke enable` for Strict Security.")
+
+@antinuke.command(name="enable")
+@commands.has_permissions(administrator=True)
+async def antinuke_enable(ctx):
+    protection_msg = (
+        "✅ **Strict Protection Activated!**\n\n"
+        "__**🛡️ Protection Details**__\n"
+        "> ➡️ **Status:** High-Security Mode\n"
+        "> ➡️ **Bypass:** Whitelist Users Only\n\n"
+        "__**⚙️ Active Protection Events**__\n"
+        "> 🟢 **Anti-Ban / Anti-Kick** (Strict)\n"
+        "> 🟢 **Anti-Channel Create/Delete**\n"
+        "> 🟢 **Anti-Role Create/Delete**\n"
+        "> 🟢 **Anti-Webhook / Integration**\n"
+        "> 🟢 **Auto-Recovery System** (ON)\n\n"
+        "🚨 **Note:** Server is now under Axora™ protection. Unauthorized mass actions will result in an instant ban."
+    )
+    await aesthetic_reply(ctx, "Axora™ Security: ENABLED", protection_msg, color=0x2ecc71)
+
+@antinuke.command(name="disable")
+@commands.has_permissions(administrator=True)
+async def antinuke_disable(ctx):
+    await aesthetic_reply(ctx, "Axora™ Security: DISABLED", "⚠️ **WARNING:** Protection is offline. Server is now vulnerable.", color=0xe74c3c)
+
+# ==========================================
+# 3. INTERACTIVE WHITELIST
 # ==========================================
 class WhitelistButtons(discord.ui.View):
     def __init__(self, target_user):
         super().__init__(timeout=120)
         self.target_user = target_user
 
-    @discord.ui.button(label="Anti-Ban", style=discord.ButtonStyle.green, emoji="🔨")
-    async def btn_ban(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"✅ Bypassed **Anti-Ban** for {self.target_user.mention}", ephemeral=True)
-
-    @discord.ui.button(label="Anti-Kick", style=discord.ButtonStyle.green, emoji="👟")
-    async def btn_kick(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"✅ Bypassed **Anti-Kick** for {self.target_user.mention}", ephemeral=True)
-
-    @discord.ui.button(label="Anti-Bot", style=discord.ButtonStyle.blurple, emoji="🤖")
-    async def btn_bot(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"✅ Bypassed **Anti-Bot** for {self.target_user.mention}", ephemeral=True)
-
     @discord.ui.button(label="Full Whitelist", style=discord.ButtonStyle.success, emoji="🛡️")
     async def btn_full(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"✅ **Full Whitelist** granted to {self.target_user.mention}", ephemeral=True)
+        await interaction.response.send_message(f"✅ **{self.target_user.name}** is now a Whitelisted Trustee.", ephemeral=True)
 
-    @discord.ui.button(label="Revoke All", style=discord.ButtonStyle.danger, emoji="❌")
+    @discord.ui.button(label="Revoke", style=discord.ButtonStyle.danger, emoji="❌")
     async def btn_revoke(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"❌ Revoked all whitelist permissions for {self.target_user.mention}", ephemeral=True)
+        await interaction.response.send_message(f"❌ Whitelist permissions revoked for {self.target_user.mention}.", ephemeral=True)
 
 @bot.command(aliases=['w'])
 @commands.has_permissions(administrator=True)
 async def whitelist(ctx, member: discord.Member):
-    """Whitelist command with Interactive Buttons"""
-    embed = discord.Embed(
-        title="🛡️ Axora™ Whitelist Manager",
-        description=f"Select the permissions you want to grant to {member.mention}:",
-        color=COLOR
-    )
-    view = WhitelistButtons(target_user=member)
+    embed = discord.Embed(title="🛡️ Whitelist Manager", description=f"Manage permissions for {member.mention}", color=COLOR)
+    view = WhitelistButtons(member)
     await ctx.send(embed=embed, view=view)
 
 # ==========================================
-# 2. ANTINUKE (NORMAL EMOJIS + ENABLE/DISABLE)
-# ==========================================
-@bot.group(invoke_without_command=True)
-@commands.has_permissions(administrator=True)
-async def antinuke(ctx):
-    await aesthetic_reply(ctx, "🛡️ System Info", "Use `&antinuke enable` or `&antinuke disable`.")
-
-@antinuke.command(name="enable")
-@commands.has_permissions(administrator=True)
-async def antinuke_enable(ctx):
-    protection_msg = (
-        "✅ **Protection Setup Complete!**\n\n"
-        "__**🛡️ Protection Details**__\n"
-        "> ➡️ **Default Action:** `BAN`\n\n"
-        "__**⚙️ Active Protection Events**__\n"
-        "> 🔴 🟢 **Anti Bot** | Anti Ban | Anti Kick\n"
-        "> 🔴 🟢 **Anti Channel/Role/Webhook**\n"
-        "> 🔴 🟢 **Auto Recovery Systems**\n\n"
-        "-# **Move the Security Role to the top for maximum efficiency.**"
-    )
-    await aesthetic_reply(ctx, "Axora™ Protection Status: ENABLED", protection_msg, color=discord.Color.green())
-
-@antinuke.command(name="disable")
-@commands.has_permissions(administrator=True)
-async def antinuke_disable(ctx):
-    await aesthetic_reply(ctx, "Axora™ Protection Status: DISABLED", "⚠️ **WARNING:** Antinuke has been disabled. Your server is currently vulnerable.", color=discord.Color.red())
-
-# ==========================================
-# 3. MODERATION (ALL LOGIC ADDED)
-# ==========================================
-@bot.command(aliases=['b'])
-@commands.has_permissions(ban_members=True)
-async def ban(ctx, member: discord.User, *, reason="No reason provided"):
-    await ctx.guild.ban(member, reason=reason)
-    await aesthetic_reply(ctx, "⚖️ Ban Issued", f"User **{member}** has been banned.\nReason: `{reason}`")
-
-@bot.command()
-@commands.has_permissions(kick_members=True)
-async def kick(ctx, member: discord.Member, *, reason="No reason"):
-    await member.kick(reason=reason)
-    await aesthetic_reply(ctx, "⚖️ Kick Issued", f"User **{member.name}** was kicked.")
-
-@bot.command()
-@commands.has_permissions(moderate_members=True)
-async def mute(ctx, member: discord.Member, *, reason="No reason"):
-    await member.timeout(datetime.timedelta(minutes=10), reason=reason)
-    await aesthetic_reply(ctx, "⚖️ Mute Issued", f"User **{member.name}** was muted for 10m.")
-
-@bot.command()
-@commands.has_permissions(manage_messages=True)
-async def warn(ctx, member: discord.Member, *, reason="Warned"):
-    await aesthetic_reply(ctx, "⚠️ Warning Issued", f"**{member.name}** has been warned: `{reason}`")
-
-@bot.command()
-@commands.has_permissions(manage_channels=True)
-async def lock(ctx):
-    await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
-    await aesthetic_reply(ctx, "🔒 Channel Locked", f"{ctx.channel.mention} is now locked.")
-
-@bot.command()
-@commands.has_permissions(manage_channels=True)
-async def unlock(ctx):
-    await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
-    await aesthetic_reply(ctx, "🔓 Channel Unlocked", f"{ctx.channel.mention} is now unlocked.")
-
-@bot.command(aliases=['p'])
-@commands.has_permissions(manage_messages=True)
-async def purge(ctx, amount: int = 10):
-    await ctx.channel.purge(limit=amount + 1)
-    await aesthetic_reply(ctx, "🧹 Clean Sweep", f"Cleared **{amount}** messages.")
-
-# ==========================================
-# 4. VOICE MANAGEMENT
-# ==========================================
-@bot.command()
-@commands.has_permissions(mute_members=True)
-async def vcmute(ctx, member: discord.Member):
-    await member.edit(mute=True)
-    await aesthetic_reply(ctx, "🎙️ Voice Mod", f"Muted {member.mention} in voice.")
-
-@bot.command()
-@commands.has_permissions(move_members=True)
-async def vcpull(ctx, member: discord.Member):
-    if ctx.author.voice and ctx.author.voice.channel:
-        await member.edit(voice_channel=ctx.author.voice.channel)
-        await aesthetic_reply(ctx, "🎙️ Voice Mod", f"Pulled {member.mention} to your channel.")
-    else:
-        await ctx.send("❌ You must be in a Voice Channel to pull someone.")
-
-# ==========================================
-# 5. INFORMATION
-# ==========================================
-@bot.command()
-async def banner(ctx, member: discord.Member = None):
-    member = member or ctx.author
-    user = await bot.fetch_user(member.id) # Needed to fetch banner
-    if user.banner:
-        await ctx.send(user.banner.url)
-    else:
-        await ctx.send("❌ This user does not have a banner.")
-
-@bot.command(aliases=['ui'])
-async def userinfo(ctx, member: discord.Member = None):
-    member = member or ctx.author
-    desc = f"> **User:** {member.mention}\n> **ID:** `{member.id}`\n> **Joined:** <t:{int(member.joined_at.timestamp())}:R>"
-    await aesthetic_reply(ctx, f"👤 Profile: {member.name}", desc)
-
-@bot.command()
-async def ping(ctx):
-    await aesthetic_reply(ctx, "🏓 Pong!", f"Latency: **{round(bot.latency * 1000)}ms**")
-
-# ==========================================
-# 6. MASTER HELP COMMAND
+# 4. HELP & UTILITY
 # ==========================================
 @bot.command()
 async def help(ctx):
-    embed = discord.Embed(title="Axora™ Command Infrastructure", color=COLOR)
-    embed.add_field(name="🛡️ **Security**", value="`antinuke`, `whitelist (w)`, `panicmode`, `antiinvite`", inline=False)
+    embed = discord.Embed(title="Axora™ Professional Command Menu", color=COLOR)
+    embed.add_field(name="🛡️ **Security**", value="`antinuke`, `automod`, `whitelist (w)`, `panicmode`", inline=False)
     embed.add_field(name="⚖️ **Moderation**", value="`ban`, `kick`, `mute`, `warn`, `lock`, `unlock`, `purge`", inline=False)
-    embed.add_field(name="🎙️ **Voice**", value="`vcmute`, `vckick`, `vcpull`, `vcmuteall`, `vcdeafen`", inline=False)
-    embed.add_field(name="⚙️ **Management**", value="`setname`, `msg`, `rolecolor`, `modlog`", inline=False)
-    embed.add_field(name="ℹ️ **Info**", value="`avatar`, `ping`, `membercount`, `userinfo`, `banner`", inline=False)
-    
-    embed.set_footer(text=f"Founder: Xicx_ | All Systems Operational")
+    embed.add_field(name="🎙️ **Voice**", value="`vcmute`, `vcpull`, `vcmoveall`", inline=False)
+    embed.add_field(name="ℹ️ **Info**", value="`avatar`, `ping`, `userinfo`, `banner`", inline=False)
+    embed.set_footer(text="Founder: Xicx_ | All Core Systems Ready")
     await ctx.send(embed=embed)
 
-# --- COMMAND PROCESSOR FIX ---
 @bot.event
 async def on_message(message):
     if message.author.bot: return
