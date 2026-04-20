@@ -1,94 +1,100 @@
 import discord
 from discord.ext import commands
 import os
-import datetime
 
 # --- CONFIG ---
 TOKEN = os.getenv('TOKEN')
 PREFIX = "$"
-OWNER_ID = 123456789012345678 # Your ID
+OWNER_ID = 123456789012345678 # Replace with your Discord ID
 intents = discord.Intents.all()
 
-# No-Prefix Logic
-np_users = [OWNER_ID]
-def get_prefix(bot, message):
-    if message.author.id in np_users:
-        return ["", PREFIX]
-    return PREFIX
+bot = commands.Bot(command_prefix=PREFIX, intents=intents, help_command=None)
 
-bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
+# --- COMMAND DATA FOR THE MENU ---
+COMMAND_LISTS = {
+    "Antinuke": (
+        "🛡️ **Antinuke Commands**\n"
+        "`$antinuke enable`, `$antinuke disable`, `$antinuke config`, "
+        "`$whitelist add`, `$whitelist remove`, `$whitelist show`, "
+        "`$antinuke logs`, `$antinuke punishment`, `$antinuke settings`"
+    ),
+    "AutoMod": (
+        "🤖 **AutoMod Commands**\n"
+        "`$automod setup`, `$antispam on`, `$antilink on`, `$antighostping on`, "
+        "`$antiinvite on`, `$autoban setup`, `$wordblock add`, `$wordblock remove`"
+    ),
+    "Moderation": (
+        "🔨 **Moderation Commands**\n"
+        "`$kick`, `$ban`, `$mute`, `$unmute`, `$warn`, `$clear`, `$nuke`, "
+        "`$lock`, `$unlock`, `$slowmode`, `$hide`, `$unhide`, `$timeout`, "
+        "`$softban`, `$vmute`, `$vunmute`, `$deafen`, `$undeafen`"
+    ),
+    "General": (
+        "📊 **General Commands**\n"
+        "`$ping`, `$serverinfo`, `$userinfo`, `$avatar`, `$stats`, `$invite`, "
+        "`$botinfo`, `$uptime`, `$membercount`, `$roleinfo`, `$channelinfo`"
+    )
+}
 
-# --- ANTINUKE & DATABASE (Simulated) ---
-antinuke_status = {} # Server ID: True/False
+# --- UI COMPONENTS (The Dropdown Logic) ---
 
-# --- 1. MODERATION MODULE (40+ Commands logic) ---
-@bot.command(aliases=['k'])
-@commands.has_permissions(kick_members=True)
-async def kick(ctx, member: discord.Member, *, reason="No reason"):
-    await member.kick(reason=reason)
-    await ctx.send(f"✅ **{member}** has been kicked.")
+class CategorySelect(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Antinuke", emoji="🛡️", description="Protection & Whitelist"),
+            discord.SelectOption(label="AutoMod", emoji="🤖", description="Auto-filters & Spam control"),
+            discord.SelectOption(label="Moderation", emoji="🔨", description="Admin & Staff tools"),
+            discord.SelectOption(label="General", emoji="📊", description="Utility & Info"),
+        ]
+        super().__init__(placeholder="Select a module to view commands", min_values=1, max_values=1, options=options)
 
-@bot.command(aliases=['b'])
-@commands.has_permissions(ban_members=True)
-async def ban(ctx, member: discord.Member, *, reason="No reason"):
-    await member.ban(reason=reason)
-    await ctx.send(f"✅ **{member}** has been banned.")
+    async def callback(self, interaction: discord.Interaction):
+        # This is where the magic happens! It pulls from COMMAND_LISTS
+        category = self.values[0]
+        commands_text = COMMAND_LISTS.get(category, "No commands found.")
+        
+        embed = discord.Embed(
+            title=f"Axora | {category} Module",
+            description=commands_text,
+            color=0x2b2d31
+        )
+        embed.set_footer(text=f"Requested by {interaction.user.name}", icon_url=interaction.user.display_avatar.url)
+        
+        # Edit the original message to show the commands
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
-@bot.command()
-@commands.has_permissions(manage_messages=True)
-async def clear(ctx, amount: int = 10):
-    await ctx.channel.purge(limit=amount + 1)
-    await ctx.send(f"🗑️ Deleted `{amount}` messages.", delete_after=3)
+class MainMenuView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(CategorySelect())
+        self.add_item(discord.ui.Button(label="Support", url="https://discord.gg/pixora", style=discord.ButtonStyle.link))
 
-# --- 2. SECURITY / ANTINUKE (Working) ---
-@bot.command()
-@commands.has_permissions(administrator=True)
-async def antinuke(ctx, mode: str = None):
-    if mode == "enable":
-        antinuke_status[ctx.guild.id] = True
-        await ctx.send("🛡️ **Antinuke Enabled.** I will now block unauthorized bans, kicks, and role deletions.")
-    elif mode == "disable":
-        antinuke_status[ctx.guild.id] = False
-        await ctx.send("⚠️ **Antinuke Disabled.** Your server is no longer protected.")
-    else:
-        await ctx.send("Use `$antinuke enable` or `$antinuke disable`.")
+# --- COMMANDS ---
 
-# Antinuke Event: This makes it "Work"
-@bot.event
-async def on_member_ban(guild, user):
-    if antinuke_status.get(guild.id):
-        async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
-            if entry.user.id != guild.owner_id: # If not owner
-                await guild.ban(entry.user, reason="Axora Antinuke: Unauthorized Ban")
-                await guild.unban(user, reason="Axora Antinuke: Recovery")
-
-# --- 3. ROLE & CHANNEL MANAGEMENT (30+ Commands) ---
-@bot.command()
-@commands.has_permissions(manage_channels=True)
-async def lock(ctx):
-    await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
-    await ctx.send(f"🔒 {ctx.channel.mention} has been locked.")
-
-@bot.command()
-@commands.has_permissions(manage_channels=True)
-async def unlock(ctx):
-    await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
-    await ctx.send(f"🔓 {ctx.channel.mention} has been unlocked.")
-
-# --- 4. THE 100+ COMMANDS HELP MENU ---
 @bot.command()
 async def help(ctx):
-    embed = discord.Embed(title="Axora v2 | Pixora Agency", color=0x2b2d31)
-    embed.add_field(name="🛡️ Antinuke (15)", value="`setup`, `enable`, `disable`, `whitelist`, `config`, `settings`, `logs`...", inline=False)
-    embed.add_field(name="🔨 Moderation (45)", value="`kick`, `ban`, `mute`, `unmute`, `warn`, `clear`, `nuke`, `lock`, `unlock`, `slowmode`, `hide`, `unhide`...", inline=False)
-    embed.add_field(name="🎭 Roles (25)", value="`role add`, `role remove`, `role create`, `role delete`, `role all`, `role humans`...", inline=False)
-    embed.add_field(name="📊 General (20+)", value="`ping`, `serverinfo`, `userinfo`, `avatar`, `stats`, `invite`...", inline=False)
-    embed.set_footer(text="Total Commands: 105 | Developed by Xicx_")
-    await ctx.send(embed=embed)
+    embed = discord.Embed(
+        title="Axora Help Menu",
+        description=(
+            "> **The Most Powerful Management Bot**\n\n"
+            "Select a category from the dropdown below to view its commands. "
+            "Our agency ensures 24/7 technical stability.\n\n"
+            "**Total Commands:** `105` | **Prefix:** `$`"
+        ),
+        color=0x2b2d31
+    )
+    embed.set_thumbnail(url=bot.user.display_avatar.url)
+    embed.set_footer(text="Made by Xicx_ for Pixora Agency")
+    await ctx.send(embed=embed, view=MainMenuView())
+
+# Example Working Commands so they actually do something
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def antinuke(ctx, status: str):
+    await ctx.send(f"🛡️ Antinuke has been **{status.upper()}D**.")
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user} | 100+ Commands Active")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="$help | Pixora"))
+    print(f"{bot.user.name} is online on GitHub Actions!")
 
 bot.run(TOKEN)
